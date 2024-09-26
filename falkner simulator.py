@@ -47,7 +47,7 @@ debug_moves = [ember, ember, ember, ember, ember, ember, ember, ember, ember, em
 
 cynda_hp = 31
 
-cluster = 0
+cluster = 1
 
 statistic = False
 
@@ -218,8 +218,6 @@ def main():
         #ending hp, amount of item usage, amount of potion/s usage
         misc_info = []
 
-        win = False
-
         #ending hp, amount of item usage, amount of potion/s usage
         misc_info = []
         rng_lst = []
@@ -295,7 +293,7 @@ def main():
             falkner_act, damage = falkner[0].useMove(ai_decision, cynda, battleRNG)
             falkner_action.append(falkner_act)
             turn.opponent_roll = damage
-            if falkner_act.find("crit") > -1:
+            if falkner_act.find("Crit") > -1:
                 turn.opponent_crit = 1
 
             #Cynda died
@@ -382,7 +380,7 @@ def main():
     end = base + offset
     print(hex(end))
 
-    log.write_output('test.csv')
+    log.write_output(f'{cluster}.csv')
     
 
 if __name__ == '__main__':

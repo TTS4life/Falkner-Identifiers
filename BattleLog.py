@@ -28,9 +28,9 @@ class BattleLog:
 
 	def mark_outcome(self, victory):
 		if self.battle == 0:
-			self.log[self.battle].append(victory)
+			self.log[self.battle].insert(0, victory)
 		else:
-			self.log[self.battle- 1].append(victory)
+			self.log[self.battle- 1].insert(0, victory)
 
 		self.battle += 1
 		self.log.append([])
@@ -63,7 +63,7 @@ class BattleTurn:
 	# 	self.commitTurn()
 
 	def to_array(self):
-		return [self.turn_count, self.cynda_hp, self.cynda_action, self.cynda_roll, self.cynda_burn, self.cynda_crit,
+		return [self.cynda_hp, self.cynda_action, self.cynda_roll, self.cynda_burn, self.cynda_crit,
 					   		self.opponent_action, self.opponent_roll, self.opponent_crit, self.opponent_hp]
 
 	def commitTurn(self):

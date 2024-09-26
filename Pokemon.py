@@ -51,6 +51,29 @@ class Pokemon:
 			enemy.actual[0] = 0
 		return damage
 	
+	def tackle(self, enemy, rng):
+		rng.advance(5)
+		crit = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1][rng.getRand() % 16] # crit if %16 = 0
+		rng.advance()
+		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
+		rng.advance()
+		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
+		accStage = self.stage[7] - enemy.stage[6]
+		if accStage >= 6:
+			accStage = 6
+		elif accStage <= -6:
+			accStage = -6
+		adjustedAccuracy = int(math.floor(95 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
+		if accCheck > adjustedAccuracy:
+			rng.jump(rng.frame-2)
+			return f"{self.species} Tackle Miss", 0
+		else:
+			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
+			damage = self.attack(enemy, 35, self.burnt, crit, dmgRand, 1, "physical", 1.5)
+			if crit == 2:
+				return f"{self.species} Tackle Crit", damage
+			return f"{self.species} Tackle", damage
+	
 	def attack_simulation(self, enemy, movePower, burnt, effectiveness, dmgType, stab):
 		if burnt and dmgType == "physical":
 			burnt = 0.5
@@ -99,11 +122,19 @@ class Cyndaquil(Pokemon):
 
 	def useMove(self, move, enemy, rng):
 			damage = 0
-			
+			res = ""
 			if move == "ember":
 				res, damage = self.ember(enemy, rng)
 			elif move == "pot":
-				res = self.potion(enemy, rng)
+				res. damage = self.potion(enemy, rng)
+			elif move == "ball":
+				res, damage = self.ball(enemy, rng)
+			elif move == "tackle":
+				res, damage = self.tackle(enemy, rng)
+			elif move == "leer":
+				res, damage = self.leer(enemy, rng)
+			elif move == "qa":
+				res, damage = self.qa(enemy, rng)
 			return res, damage
 		
 	def ember(self, enemy, rng):
@@ -168,7 +199,7 @@ class Cyndaquil(Pokemon):
 		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
 		if accCheck > adjustedAccuracy:
 			rng.jump(rng.frame-2)
-			return "Leer Miss"
+			return "Leer Miss", 0
 		else:
 			#print(f"trying leer, {enemy.actual[0]}")
 			enemy.stage[2] -= 1
@@ -176,7 +207,7 @@ class Cyndaquil(Pokemon):
 				enemy.stage[2] = -6
 			enemy.updateStats()
 			#print(f"I am at {self.stage[2]} | {self.actual[0]}, Enemy is at {enemy.stage[2]} | {enemy.actual[0]}")
-			return f"Leer"
+			return f"Leer", 0
 	
 	def smokescreen(self, enemy, rng):
 		rng.advance(4)
@@ -200,9 +231,9 @@ class Cyndaquil(Pokemon):
 			#print(f"I am at {self.stage[2]} | {self.actual[0]}, Enemy is at {enemy.stage[2]} | {enemy.actual[0]}")
 			return f"Smokescreen"
 	
-	def potion(self, enemy, rng):
+	def potion(self, enemy, rng, health = 20):
 		rng.advance(2)
-		self.actual[0] += 20
+		self.actual[0] += health
 		if self.actual[0] > self.base_stats[0]:
 			self.actual[0] = self.base_stats[0]
 		return f"Potion to {self.actual[0]}"
@@ -210,6 +241,29 @@ class Cyndaquil(Pokemon):
 	def ball(self, enemy, rng):
 		rng.advance(2)
 		return f"Ball"
+	
+	def qa(self, enemy, rng):
+		rng.advance(5)
+		crit = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1][rng.getRand() % 16] # crit if %16 = 0
+		rng.advance()
+		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
+		rng.advance()
+		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
+		accStage = self.stage[7] - enemy.stage[6]
+		if accStage >= 6:
+			accStage = 6
+		elif accStage <= -6:
+			accStage = -6
+		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
+		if accCheck > adjustedAccuracy:
+			rng.jump(rng.frame-2)
+			return f"{self.species} QA Miss", 0
+		else:
+			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
+			damage = self.attack(enemy, 40, self.burnt, crit, dmgRand, 1, "physical", 1.5)
+			if crit == 2:
+				return f"{self.species} QA Crit", damage
+			return f"{self.species} QA", damage
 	
 	def reset(self, init_hp = None):
 		self.stage = [0,0,0,0,0,0,0,0]
@@ -250,29 +304,6 @@ class Pidgey(Pokemon):
 		else:
 			print(f"{move} is not available")
 		return res
-	
-	def tackle(self, enemy, rng):
-		rng.advance(5)
-		crit = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1][rng.getRand() % 16] # crit if %16 = 0
-		rng.advance()
-		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
-		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(95 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
-			rng.jump(rng.frame-2)
-			return "Pidgey Tackle Miss", 0
-		else:
-			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
-			damage = self.attack(enemy, 35, self.burnt, crit, dmgRand, 1, "physical", 1.5)
-			if crit == 2:
-				return f"Pidgey Tackle Crit", damage
-			return f"Pidgey Tackle", damage
 	
 	def sand(self, enemy, rng):
 		rng.advance(4)
@@ -350,29 +381,6 @@ class Pidgeotto(Pokemon):
 			if crit == 2:
 				return f"Gust Crit", damage
 			return f"Gust", damage
-	
-	def tackle(self, enemy, rng):
-		rng.advance(5)
-		crit = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1][rng.getRand() % 16] # crit if %16 = 0
-		rng.advance()
-		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
-		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(95 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
-			rng.jump(rng.frame-2)
-			return "Pidgeotto Tackle Miss", 0
-		else:
-			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
-			damage = self.attack(enemy, 35, self.burnt, crit, dmgRand, 1, "physical", 1.5)
-			if crit == 2:
-				return f"Pidgeotto Tackle Crit", damage
-			return f"Pidgeotto Tackle", damage
 	
 	def roost(self, enemy, rng):
 		rng.advance(4)
