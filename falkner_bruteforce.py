@@ -3,85 +3,38 @@
 from Pokemon import Cyndaquil, Pidgeotto, Pidgey
 from RNG import RNG
 from copy import deepcopy
+from BattleState import BattleState
 
-pidgeotto_burned = False
-pidgeotto_current_hp = 28
+# pidgeotto_burned = False
+# pidgeotto_current_hp = 28
 
-cynda_current_hp = 18
+# cynda_current_hp = 18
 
-battle_rng_advances = 90
-battle_rng_seed = 0x560b1c99
 
-actions = ["ember",  "tackle", "qa", "pot", "ball", "leer" ]
+actions = ["ember",  "tackle", "leer", "qa", "pot", "ball"  ]
 
 winning_combos = []
+all_combos = []
+
+num_combos = 20 # how many of the best win cons to show
 
 
-class BattleState:
-	def __init__(self, rng, adv, cynda, pidgeotto):
-		self.rng = RNG(rng)
-		self.cyndaquil = cynda
-		self.pidgeotto = pidgeotto
-		self.actions = []
-
-		for _ in range(adv):
-			self.rng.jump(adv)
-
-	def do_action(self, action):
-		skip_cynda_attack = 0
-		falk_act = ""
-		dmg = 0
-		
-		#Falkner think
-		falk_decision = self.pidgeotto.decide(self.cyndaquil, self.rng)
-
-
-		# self.actions.append(self.rng.frame)
-
-		if action == "ball":
-			self.cyndaquil.potion(None, self.rng, 0)
-			skip_cynda_attack = 1
-
-		if action == "pot":
-			self.cyndaquil.potion(None, self.rng)
-			skip_cynda_attack = 1
-
-		#cyndaquil attack
-		if skip_cynda_attack == 0:
-			self.cyndaquil.useMove(action, self.pidgeotto, self.rng)
-
-
-		#Falkner attack
-		if self.pidgeotto.actual[0] > 0:
-			# self.actions.append(falk_decision)
-			falk_act, dmg = self.pidgeotto.useMove(falk_decision, self.cyndaquil, self.rng)
-
-
-		#Handle burn
-		if self.pidgeotto.burnt == True:
-			self.pidgeotto.actual[0] -= int(self.pidgeotto.base_stats[0] / 8)
-
-		# print(f"End turn: Pidgeotto has {self.pidgeotto.actual[0]}, cynda as {self.cyndaquil.actual[0]}")
-
-		self.actions.append(action)
-		self.actions.append([falk_act, dmg])
-		# self.actions.append(self.cyndaquil.actual[0])
-
-
-
-
-def main():
+def main(seed, turn):
 	cynda = Cyndaquil(deepcopy([31, 20, 17, 24, 15, 24]), 12, 31)
-	cynda.levelUp()
-
-	cynda.actual[0] = cynda_current_hp
 
 	pidgeotto = Pidgeotto(deepcopy([40, 21, 20, 18, 18, 14]), 13, species = "pidgeotto")
+	pidgey = Pidgey(deepcopy([26, 14, 10, 11, 11, 15]), 9, species = "pidgey")
 
-	pidgeotto.actual[0] = pidgeotto_current_hp
-	pidgeotto.burnt = pidgeotto_burned
+	# pidgeotto.actual[0] = pidgeotto_current_hp
+	# pidgeotto.burnt = pidgeotto_burned
 
-	state = BattleState(battle_rng_seed, battle_rng_advances, cynda, pidgeotto)
+	state = BattleState(seed, 0, cynda, pidgeotto, pidgey)
+
+	for i in range(turn):
+		if(state.cyndaquil.actual[0] < 11 ):
+			state.do_action('pot')
+		else:	
+			state.do_action('ember')	#Advance up to identifier
 
 	print(f"Winning combos for seed {hex(state.rng.seed)}")
 
@@ -89,56 +42,57 @@ def main():
 	for action in actions:
 		next_turn(deepcopy(state), action, 1)
 
-	print(winning_combos.sort(key=len))
+	winning_combos.sort(key=len)
 
-	for combo in winning_combos:
-		print(combo)
+	if(len(winning_combos) > 0):
+		for i in range(min(num_combos, len(winning_combos))):
+			print((len(winning_combos[i]) - 1) / 2, winning_combos[i])
 
 
 def next_turn(state, action, turn_count):
-	
 	state.do_action(action)
 	#Pidgeotto died, base case 1
-	if state.pidgeotto.actual[0] <= 0 and state.cyndaquil.actual[0] > 0:
+
+	all_combos.append(deepcopy(state.actions))
+
+	if state.cyndaquil.actual[0] > 0 and not state.all_enemies_dead() and turn_count <= 5:
+		for next_action in actions:
+				next_turn(deepcopy(state), next_action, turn_count + 1)
+	
+	if state.all_enemies_dead():
 		state.actions.append(state.cyndaquil.actual[0])
 		winning_combos.append(deepcopy(state.actions))
 		return
+	
 	#Cynda died, base case 2
-	elif state.cyndaquil.actual[0] <= 0 and state.pidgeotto.actual[0] > 0:
-		# print("Lose con found")
-		return state.actions.append("Cynda died")
-	elif state.cyndaquil.actual[0] <= 0 and state.pidgeotto.actual[0] > 0:
-		return #cooked case
-	elif turn_count >= 5:
-		#Too many turns have passed, stop
-		# print("Exceeded turns")
+	elif state.cyndaquil.actual[0] <= 0 and not state.all_enemies_dead():
 		return 
-	else:
-		for action in actions:
-			next_turn(deepcopy(state), action, turn_count + 1)
-
-		#return ERR, could not find wincon or bad base case
-
+	
+	elif state.cyndaquil.actual[0] <= 0 and state.all_enemies_dead():
+		return #cooked case
 
 def debug():
+	seed = 0x560b1c43
+	actions = ['ember', 'ember', 'ember', 'ember', 'ember']
 	cynda = Cyndaquil(deepcopy([31, 20, 17, 24, 15, 24]), 12, 31)
-	cynda.levelUp()
-
-	cynda.actual[0] = cynda_current_hp
 
 	pidgeotto = Pidgeotto(deepcopy([40, 21, 20, 18, 18, 14]), 13, species = "pidgeotto")
+	pidgey = Pidgey(deepcopy([26, 14, 10, 11, 11, 15]), 9, species = "pidgey")
 
-	pidgeotto.actual[0] = pidgeotto_current_hp
-	pidgeotto.burnt = pidgeotto_burned
+	state = BattleState(seed, 0, cynda, pidgeotto, pidgey)
 
-	state = BattleState(battle_rng_seed, battle_rng_advances, cynda, pidgeotto)
-
-	for action in ["leer", "ember", "ember"]:
+	for action in actions:
 		state.do_action(action)
-		print("cynda hp ", state.cyndaquil.actual[0])
-		# print(state.pidgeotto.actual[0])
-
+		print(state.rng.frame)
+	
 	print(state.actions)
+	
 
 if __name__ == '__main__':
-	main()
+	# debug()
+	# exit()
+
+	seed = int( input("What seed? "), 16)
+	turn = int(input("What turn? "))
+	
+	main(seed, turn)

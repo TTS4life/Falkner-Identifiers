@@ -66,10 +66,14 @@ class Pokemon:
 		adjustedAccuracy = int(math.floor(95 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
 		if accCheck > adjustedAccuracy:
 			rng.jump(rng.frame-2)
-			return f"{self.species} Tackle Miss", 0
+			return f" {self.species} Tackle Miss", 0
 		else:
 			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
-			damage = self.attack(enemy, 35, self.burnt, crit, dmgRand, 1, "physical", 1.5)
+			if self.species in ['pidgey', 'pidgeotto']:
+				stab = 1.5
+			else:
+				stab = 1
+			damage = self.attack(enemy, 35, self.burnt, crit, dmgRand, 1, "physical", stab)
 			if crit == 2:
 				return f"{self.species} Tackle Crit", damage
 			return f"{self.species} Tackle", damage
@@ -108,6 +112,10 @@ class Pokemon:
 
 class Cyndaquil(Pokemon):
 
+	def __init__(self, base_stats, level, species = 0, actual_hp = None):
+		self.species = "Cyndaquil"
+		super().__init__(base_stats, level, species, actual_hp)
+
 	def decide(self, enemy, rng):
 		if enemy.species == "pidgey":
 			return "ember"
@@ -126,7 +134,7 @@ class Cyndaquil(Pokemon):
 			if move == "ember":
 				res, damage = self.ember(enemy, rng)
 			elif move == "pot":
-				res. damage = self.potion(enemy, rng)
+				res, damage = self.potion(enemy, rng)
 			elif move == "ball":
 				res, damage = self.ball(enemy, rng)
 			elif move == "tackle":
@@ -156,7 +164,7 @@ class Cyndaquil(Pokemon):
 		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
 		if accCheck > adjustedAccuracy:
 			rng.jump(rng.frame-2)
-			return "Ember Miss", 0, False
+			return "Ember Miss", 0
 		else:
 			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
 			#print(f"base hp: {self.base_stats[0]}")
@@ -221,7 +229,7 @@ class Cyndaquil(Pokemon):
 		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
 		if accCheck > adjustedAccuracy:
 			rng.jump(rng.frame-2)
-			return "Smokescreen Miss"
+			return "Smokescreen Miss", 0
 		else:
 			#print(f"trying leer, {enemy.actual[0]}")
 			enemy.stage[7] -= 1
@@ -229,18 +237,18 @@ class Cyndaquil(Pokemon):
 				enemy.stage[7] = -6
 			enemy.updateStats()
 			#print(f"I am at {self.stage[2]} | {self.actual[0]}, Enemy is at {enemy.stage[2]} | {enemy.actual[0]}")
-			return f"Smokescreen"
+			return f"Smokescreen", 0
 	
 	def potion(self, enemy, rng, health = 20):
 		rng.advance(2)
 		self.actual[0] += health
 		if self.actual[0] > self.base_stats[0]:
 			self.actual[0] = self.base_stats[0]
-		return f"Potion to {self.actual[0]}"
+		return f"Potion to {self.actual[0]}", 0
 	
 	def ball(self, enemy, rng):
 		rng.advance(2)
-		return f"Ball"
+		return f"Ball", 0
 	
 	def qa(self, enemy, rng):
 		rng.advance(5)
@@ -257,13 +265,13 @@ class Cyndaquil(Pokemon):
 		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
 		if accCheck > adjustedAccuracy:
 			rng.jump(rng.frame-2)
-			return f"{self.species} QA Miss", 0
+			return f"QA Miss", 0
 		else:
 			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
-			damage = self.attack(enemy, 40, self.burnt, crit, dmgRand, 1, "physical", 1.5)
+			damage = self.attack(enemy, 40, self.burnt, crit, dmgRand, 1, "physical", 1.0)
 			if crit == 2:
-				return f"{self.species} QA Crit", damage
-			return f"{self.species} QA", damage
+				return f"QA Crit", damage
+			return f"QA", damage
 	
 	def reset(self, init_hp = None):
 		self.stage = [0,0,0,0,0,0,0,0]
