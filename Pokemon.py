@@ -18,6 +18,28 @@ class Pokemon:
 		self.attracted = False
 		self.flinch = False
 
+	#Return TRUE if move hits, else reutrn FALSE
+	def move_hits(self, enemy, rng, moveAcc ):
+		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
+		accStage = self.stage[7] - enemy.stage[6]
+		if accStage >= 6:
+			accStage = 6
+		elif accStage <= -6:
+			accStage = -6
+		adjustedAccuracy = int(math.floor(moveAcc * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
+
+		return accCheck < adjustedAccuracy
+	
+	def get_crit_roll(self, rng):
+		if self.pumped:
+			crit = [2,1,1,1][rng.getRand() % 4]
+		else:
+			crit = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1][rng.getRand() % 16]
+		rng.advance()
+		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
+		rng.advance()
+
+		return crit, dmgRand
 
 	#currently, weather, screen, targets, weather, flash fire, item, me first, type 2, super effectiveness-reducing ability, expert belt, tented lens, type reducing berries
 	# movePower is passed in as int, burnt is passed in as bool, crit is passed in as multiplier, dmgRand is passed in before /100, effectiveness is multiplier, dmgType is physical/spec, stab is multiplier
@@ -53,20 +75,13 @@ class Pokemon:
 	
 	def tackle(self, enemy, rng):
 		rng.advance(5)
-		crit = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1][rng.getRand() % 16] # crit if %16 = 0
-		rng.advance()
-		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
-		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(95 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
+		
+		crit, dmgRand = self.get_crit_roll(rng)
+
+		if not self.move_hits(enemy, rng, 95):
 			rng.jump(rng.frame-2)
-			return f" {self.species} Tackle Miss", 0
+			return f"{self.species} Tackle Miss", 0
+		
 		else:
 			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
 			if self.species in ['pidgey', 'pidgeotto']:
@@ -148,26 +163,13 @@ class Cyndaquil(Pokemon):
 	def ember(self, enemy, rng):
 		rng.advance(4)
 		rng.advance()
-		if self.pumped:
-			crit = [2,1,1,1][rng.getRand() % 4]
-		else:
-			crit = [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1][rng.getRand() % 16]
-		rng.advance()
-		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
-		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
+		crit, dmgRand = self.get_crit_roll(rng)
+
+		if not self.move_hits(enemy, rng, 100):
 			rng.jump(rng.frame-2)
 			return "Ember Miss", 0
 		else:
-			#def attack(self, enemy, movePower, burnt, crit, dmgRand, effectiveness, dmgType, stab):
-			#print(f"base hp: {self.base_stats[0]}")
+
 			if int(self.base_stats[0] / 3) >= self.actual[0]:
 				movePower = 60
 			else:
@@ -198,36 +200,22 @@ class Cyndaquil(Pokemon):
 	def leer(self, enemy, rng):
 		rng.advance(4)
 		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
+
+		if not self.move_hits(enemy, rng, 100):
 			rng.jump(rng.frame-2)
 			return "Leer Miss", 0
 		else:
-			#print(f"trying leer, {enemy.actual[0]}")
 			enemy.stage[2] -= 1
 			if enemy.stage[2] < -6:
 				enemy.stage[2] = -6
 			enemy.updateStats()
-			#print(f"I am at {self.stage[2]} | {self.actual[0]}, Enemy is at {enemy.stage[2]} | {enemy.actual[0]}")
 			return f"Leer", 0
 	
 	def smokescreen(self, enemy, rng):
 		rng.advance(4)
 		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
+
+		if not self.move_hits(enemy, rng, 100):
 			rng.jump(rng.frame-2)
 			return "Smokescreen Miss", 0
 		else:
@@ -256,14 +244,9 @@ class Cyndaquil(Pokemon):
 		rng.advance()
 		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
 		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
+
+
+		if not self.move_hits(enemy, rng, 100):
 			rng.jump(rng.frame-2)
 			return f"QA Miss", 0
 		else:
@@ -316,14 +299,8 @@ class Pidgey(Pokemon):
 	def sand(self, enemy, rng):
 		rng.advance(4)
 		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
+
+		if not self.move_hits(enemy, rng, 100):
 			rng.jump(rng.frame-2)
 			return "Sand Attack Miss", 0
 		else:
@@ -373,14 +350,8 @@ class Pidgeotto(Pokemon):
 		rng.advance()
 		dmgRand = [100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85][rng.getRand() % 16]
 		rng.advance()
-		accCheck = (rng.getRand()%100) + 1 # miss if check > acc
-		accStage = self.stage[7] - enemy.stage[6]
-		if accStage >= 6:
-			accStage = 6
-		elif accStage <= -6:
-			accStage = -6
-		adjustedAccuracy = int(math.floor(100 * ([33, 36, 43, 50, 60, 75, 100, 133, 166, 200, 250, 266, 300] [accStage+6] / 100)))
-		if accCheck > adjustedAccuracy:
+
+		if not self.move_hits(enemy, rng, 100):
 			rng.jump(rng.frame-2)
 			return "Gust Miss", 0
 		else:
